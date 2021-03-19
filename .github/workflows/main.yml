@@ -38,9 +38,9 @@ jobs:
       - name: Run Liquibase migrations
         uses: liquibase/liquibase-github-action@v2
         with:
-          operation: 'status'
-          classpath: 'example/changelogs'
-          changeLogFile: 'samplechangelog.h2.sql'
+          operation: 'update'
+          classpath: '/liquibase/lib/mssql.jar'
+          changeLogFile: 'changelog.xml'
           username: sa
           password: 'SqlSever123123'
           url: 'jdbc:sqlserver://127.0.0.1:1433;database=db;'
