@@ -12,13 +12,23 @@ jobs:
   testLiquibaseMigrations:
     runs-on: ubuntu-18.04
 
-    steps:
-      - name: Setup SQL Server database
-        uses: 280780363/sqlserver-action@v1.0
-        with:
-          accept eula: Y
-          sa password: 'SqlSever123123'
+    env:
+      mssql_user: 'sa'
+      mssql_pass: 'SqlSever123123'
+      mssql_db: 'db'
+      mssql_port: 1433
+      change_log_file: 'changelog.xml'
 
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2017-latest
+        env:
+          ACCEPT_EULA: Y
+          SA_PASSWORD: ${{ env.mssql_pass }}
+        ports:
+          - 1433:1433
+
+    steps:
       - name: Install SQL Server Client
         run: |
           sudo apt-get install curl
@@ -30,7 +40,7 @@ jobs:
 
       - name: Create database
         run: |
-          sqlcmd -U sa -P SqlSever123123 -Q "CREATE database db"
+          sqlcmd -U ${mssql_user} -P ${mssql_pass} -Q "CREATE database ${mssql_db}"
 
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -39,8 +49,29 @@ jobs:
         uses: liquibase/liquibase-github-action@v2
         with:
           operation: 'update'
+          changeLogFile: ${{ env.change_log_file }}
+          username: ${{ env.mssql_user }}
+          password: ${{ env.mssql_pass }}
+          url: 'jdbc:sqlserver://mssql:${{ env.mssql_port }};database=${{ env.mssql_db }};'
           classpath: '/liquibase/lib/mssql.jar'
-          changeLogFile: 'changelog.xml'
-          username: sa
-          password: 'SqlSever123123'
-          url: 'jdbc:sqlserver://127.0.0.1:1433;database=db;'
+
+      - name: Show Liquibase history
+        uses: liquibase/liquibase-github-action@v2
+        with:
+          operation: 'history'
+          changeLogFile: ${{ env.change_log_file }}
+          username: ${{ env.mssql_user }}
+          password: ${{ env.mssql_pass }}
+          url: 'jdbc:sqlserver://mssql:${{ env.mssql_port }};database=${{ env.mssql_db }};'
+          classpath: '/liquibase/lib/mssql.jar'
+
+      - name: Run Liquibase rollback count 1
+        uses: liquibase/liquibase-github-action@v2
+        with:
+          operation: 'rollbackCount'
+          count: 1
+          changeLogFile: ${{ env.change_log_file }}
+          username: ${{ env.mssql_user }}
+          password: ${{ env.mssql_pass }}
+          url: 'jdbc:sqlserver://mssql:${{ env.mssql_port }};database=${{ env.mssql_db }};'
+          classpath: '/liquibase/lib/mssql.jar'
