@@ -1,0 +1,46 @@
+name: Test Liquibase migrations
+
+on:
+  push:
+    branches:
+      - '**'  # matches every branch
+      # - '!main'  # excludes main
+
+  workflow_dispatch:  # run this workflow manually from the Actions tab
+
+jobs:
+  testLiquibaseMigrations:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Setup SQL Server database
+        uses: 280780363/sqlserver-action@v1.0
+        with:
+          accept eula: Y
+          sa password: 'SqlSever123123'
+
+      - name: Install SQL Server Client
+        run: |
+          sudo apt-get install curl
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+          sudo apt-get update
+          sudo apt-get install mssql-tools unixodbc-dev
+          sudo ln -s /opt/mssql-tools/bin/sqlcmd /usr/bin/sqlcmd
+
+      - name: Create database
+        run: |
+          sqlcmd -U sa -P SqlSever123123 -Q "CREATE database db"
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Liquibase migrations
+        uses: liquibase/liquibase-github-action@v1
+        with:
+          operation: 'status'
+          classpath: 'example/changelogs'
+          changeLogFile: 'samplechangelog.h2.sql'
+          username: sa
+          password: 'SqlSever123123'
+          url: 'jdbc:sqlserver://127.0.0.1:1433;database=db;'
