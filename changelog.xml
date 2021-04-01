@@ -6,8 +6,10 @@
 
     <changeSet id="create_schema" author="l-j">
         <sql>
-            CREATE SCHEMA test;
+            IF NOT EXISTS ( SELECT * FROM sys.schemas WHERE name = 'test' )
+                EXEC('CREATE SCHEMA test');
         </sql>
+        <rollback/>
     </changeSet>
 
     <changeSet id="create table" author="l-j">
@@ -17,6 +19,10 @@
                 ,[value] [nvarchar](100) NOT NULL
             )
         </sql>
-        <rollback></rollback>
+        <rollback>
+            <sql>
+                DROP TABLE IF EXISTS [test].[table1];
+            </sql>
+        </rollback>
     </changeSet>
 </databaseChangeLog>
