@@ -46,9 +46,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Run Liquibase migrations
-        uses: liquibase/liquibase-github-action@v2
+        uses: l-j/liquibase-github-action@main
         with:
-          operation: 'update'
+          operation: 'updateTestingRollback'
           changeLogFile: ${{ env.change_log_file }}
           username: ${{ env.mssql_user }}
           password: ${{ env.mssql_pass }}
@@ -56,20 +56,9 @@ jobs:
           classpath: '/liquibase/lib/mssql.jar'
 
       - name: Show Liquibase history
-        uses: liquibase/liquibase-github-action@v2
+        uses: l-j/liquibase-github-action@main
         with:
           operation: 'history'
-          changeLogFile: ${{ env.change_log_file }}
-          username: ${{ env.mssql_user }}
-          password: ${{ env.mssql_pass }}
-          url: 'jdbc:sqlserver://mssql:${{ env.mssql_port }};database=${{ env.mssql_db }};'
-          classpath: '/liquibase/lib/mssql.jar'
-
-      - name: Run Liquibase rollback count 1
-        uses: liquibase/liquibase-github-action@v2
-        with:
-          operation: 'rollbackCount'
-          count: 1
           changeLogFile: ${{ env.change_log_file }}
           username: ${{ env.mssql_user }}
           password: ${{ env.mssql_pass }}
